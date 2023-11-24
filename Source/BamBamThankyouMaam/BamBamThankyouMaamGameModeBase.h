@@ -14,6 +14,6 @@ class BAMBAMTHANKYOUMAAM_API ABamBamThankyouMaamGameModeBase : public AGameModeB
 {
 	GENERATED_BODY()
 	
-		void StartPlay();
+	virtual void StartPlay();
 
 };
