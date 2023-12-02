@@ -23,7 +23,7 @@ public:
 
 	// Function to apply damage to the character
 	UFUNCTION(BlueprintCallable, Category = "Player")
-	void TakeDamage(float DamageAmount);
+	void MyTakeDamage(float DamageAmount);
 
 	// Function to update the health debug display
 	void UpdateHealthDebugDisplay();

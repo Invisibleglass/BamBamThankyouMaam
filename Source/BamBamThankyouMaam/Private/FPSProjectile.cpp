@@ -2,6 +2,7 @@
 
 
 #include "FPSProjectile.h"
+#include "BoomerEnemy.h"
 
 // Sets default values
 AFPSProjectile::AFPSProjectile()
@@ -60,6 +61,7 @@ AFPSProjectile::AFPSProjectile()
 	ProjectileMeshComponent->SetupAttachment(RootComponent);
 
 	// Delete the projectile after 3 seconds.
+	BulletDamage = 1.0f;
 	InitialLifeSpan = 3.0f;
 }
 
@@ -91,5 +93,13 @@ void AFPSProjectile::OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor
 		OtherComponent->AddImpulseAtLocation(ProjectileMovementComponent->Velocity * 100.0f, Hit.ImpactPoint);
 	}
 
+	if (OtherActor->IsA(ABoomerEnemy::StaticClass()))
+	{
+		ABoomerEnemy* Enemy = Cast<ABoomerEnemy>(OtherActor);
+		if (Enemy)
+		{
+			Enemy->MyTakeDamage(BulletDamage);
+		}
+	}
 	Destroy();
 }

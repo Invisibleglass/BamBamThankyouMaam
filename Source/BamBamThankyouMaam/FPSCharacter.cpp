@@ -141,7 +141,7 @@ void AFPSCharacter::Fire()
 	}
 }
 
-void AFPSCharacter::TakeDamage(float DamageAmount)
+void AFPSCharacter::MyTakeDamage(float DamageAmount)
 {
 	health -= DamageAmount;
 
