@@ -25,6 +25,15 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Enemy")
 	void MyTakeDamage(float Damage);
+	
+	UFUNCTION(BlueprintCallable, Category = "Enemy")
+	void Wander();
+
+	UFUNCTION(BlueprintCallable, Category = "Enemy")
+	void MoveRandomly();
+
+	UFUNCTION(BlueprintCallable, Category = "Enemy")
+	void ResetMovementFlag();
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player")
 	float health;
@@ -35,6 +44,17 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Enemy")
 	float ExplosionRadius;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Enemy")
+	float SightRadius;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Enemy")
+	float PatrolRadius;
+
+
 private:
 	AActor* PlayerCharacter;
+	AActor* PatrolCube;
+	FTimerHandle WaitTimerHandle;
+	float WaitTime;
+	bool bIsMoving;
 };

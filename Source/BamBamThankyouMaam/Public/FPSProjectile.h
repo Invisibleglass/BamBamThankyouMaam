@@ -29,6 +29,10 @@ public:
 	UFUNCTION()
 	void OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComponent, FVector NormalImpulse, const FHitResult& Hit);
 
+	// Function that initializes the projectile's velocity in the shoot direction.
+	UFUNCTION()
+	void FireInDirection(const FVector& ShootDirection);
+
 	// Sphere collision component.
 	UPROPERTY(VisibleDefaultsOnly, Category = Projectile)
 	USphereComponent* CollisionComponent;
@@ -45,9 +49,7 @@ public:
 	UPROPERTY(VisibleDefaultsOnly, Category = Movement)
 	UMaterialInstanceDynamic* ProjectileMaterialInstance;
 
-	// Function that initializes the projectile's velocity in the shoot direction.
-	void FireInDirection(const FVector& ShootDirection);
-
 	UPROPERTY(EditAnywhere, Category = Projectile)
 	float BulletDamage;
+
 };
