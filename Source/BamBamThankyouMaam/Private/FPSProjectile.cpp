@@ -4,6 +4,7 @@
 #include "FPSProjectile.h"
 #include "BoomerEnemy.h"
 #include "ShootingEnemy.h"
+#include "ZigZagEnemy.h"
 #include "BamBamThankyouMaam/FPSCharacter.h"
 
 // Sets default values
@@ -115,6 +116,14 @@ void AFPSProjectile::OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor
 	if (OtherActor->IsA(AShootingEnemy::StaticClass()))
 	{
 		AShootingEnemy* Enemy = Cast<AShootingEnemy>(OtherActor);
+		if (Enemy)
+		{
+			Enemy->MyTakeDamage(BulletDamage);
+		}
+	}
+	if (OtherActor->IsA(AZigZagEnemy::StaticClass()))
+	{
+		AZigZagEnemy* Enemy = Cast<AZigZagEnemy>(OtherActor);
 		if (Enemy)
 		{
 			Enemy->MyTakeDamage(BulletDamage);
