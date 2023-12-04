@@ -35,7 +35,7 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Enemy")
 	void ResetMovementFlag();
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Enemy")
 	float health;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Enemy")

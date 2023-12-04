@@ -3,6 +3,8 @@
 
 #include "FPSProjectile.h"
 #include "BoomerEnemy.h"
+#include "ShootingEnemy.h"
+#include "BamBamThankyouMaam/FPSCharacter.h"
 
 // Sets default values
 AFPSProjectile::AFPSProjectile()
@@ -70,6 +72,7 @@ void AFPSProjectile::BeginPlay()
 {
 	Super::BeginPlay();
 	
+	CollisionComponent->OnComponentBeginOverlap.AddDynamic(this, &AFPSProjectile::OnProjectileOverlap);
 }
 
 // Called every frame
@@ -101,5 +104,34 @@ void AFPSProjectile::OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor
 			Enemy->MyTakeDamage(BulletDamage);
 		}
 	}
+	if (OtherActor->IsA(AFPSCharacter::StaticClass()))
+	{
+		AFPSCharacter* Player = Cast<AFPSCharacter>(OtherActor);
+		if (Player)
+		{
+			Player->MyTakeDamage(BulletDamage);
+		}
+	}
+	if (OtherActor->IsA(AShootingEnemy::StaticClass()))
+	{
+		AShootingEnemy* Enemy = Cast<AShootingEnemy>(OtherActor);
+		if (Enemy)
+		{
+			Enemy->MyTakeDamage(BulletDamage);
+		}
+	}
 	Destroy();
+}
+
+void AFPSProjectile::OnProjectileOverlap(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComponent, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
+	if (OtherActor != this && OtherActor->IsA(AFPSCharacter::StaticClass()))
+	{
+		AFPSCharacter* Player = Cast<AFPSCharacter>(OtherActor);
+		if (Player)
+		{
+			Player->MyTakeDamage(BulletDamage);
+		}
+		Destroy();
+	}
 }

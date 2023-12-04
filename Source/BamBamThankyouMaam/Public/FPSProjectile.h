@@ -33,6 +33,9 @@ public:
 	UFUNCTION()
 	void FireInDirection(const FVector& ShootDirection);
 
+	UFUNCTION()
+	void OnProjectileOverlap(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComponent, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+
 	// Sphere collision component.
 	UPROPERTY(VisibleDefaultsOnly, Category = Projectile)
 	USphereComponent* CollisionComponent;

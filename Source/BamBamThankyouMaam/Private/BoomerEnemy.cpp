@@ -103,8 +103,6 @@ void ABoomerEnemy::MoveRandomly()
 	// Generate a random direction for the AI to move
 	FVector RandomDirection = FVector(FMath::FRandRange(-1.0f, 1.0f), FMath::FRandRange(-1.0f, 1.0f), 0.0f);
 	RandomDirection.Normalize();
-	// Move the AI in the random direction using the UCharacterMovement component
-	AddMovementInput(RandomDirection, 1.0f, true);	
 
 	// Calculate rotation towards the target
 	FRotator DesiredRotation = (RandomDirection).Rotation();
