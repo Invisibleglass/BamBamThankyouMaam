@@ -33,8 +33,14 @@ private:
 	float ZigZagAmplitude;
 	float TimeSinceLastChange;
 	float RotationInterpSpeed;
+	float AttackDistance;
+	float HitDistance;
+
 	bool bIsMovingRight;
+	bool bAttacked;
 
 	void MoveZigZag(float DeltaTime);
+	void Attack(float DeltaTime);
+	void HitPlayer();
 	bool CheckForObstacle();
 };

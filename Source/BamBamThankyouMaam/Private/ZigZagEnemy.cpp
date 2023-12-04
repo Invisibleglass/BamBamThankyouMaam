@@ -2,6 +2,7 @@
 #include "ZigZagEnemy.h"
 #include "GameFramework/PlayerController.h"
 #include "Kismet/GameplayStatics.h"
+#include "BamBamThankyouMaam/FPSCharacter.h"
 
 AZigZagEnemy::AZigZagEnemy()
 {
@@ -12,6 +13,8 @@ AZigZagEnemy::AZigZagEnemy()
 	bIsMovingRight = true;
 	health = 5.0f;
 	RotationInterpSpeed = 20.0f;
+	AttackDistance = 600.0f;
+	HitDistance = 200.0f;
 }
 
 void AZigZagEnemy::BeginPlay()
@@ -28,7 +31,15 @@ void AZigZagEnemy::Tick(float DeltaTime)
 	{
 		if (!CheckForObstacle())
 		{
-			MoveZigZag(DeltaTime);
+			if (FVector::Dist(PlayerCharacter->GetActorLocation(), GetActorLocation()) <= AttackDistance)
+			{
+				Attack(DeltaTime);
+			}
+			else
+			{
+				bAttacked = false;
+				MoveZigZag(DeltaTime);
+			}
 		}
 	}
 }
@@ -36,6 +47,34 @@ void AZigZagEnemy::Tick(float DeltaTime)
 void AZigZagEnemy::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
+}
+
+void AZigZagEnemy::Attack(float DeltaTime)
+{
+	FVector DirectionToPlayer = PlayerCharacter->GetActorLocation() - GetActorLocation();
+	DirectionToPlayer.Normalize();
+
+	// Rotate smoothly to face the player
+	if (!DirectionToPlayer.IsNearlyZero())
+	{
+		FRotator NewRotation = DirectionToPlayer.Rotation();
+		SetActorRotation(FMath::RInterpTo(GetActorRotation(), NewRotation, DeltaTime, RotationInterpSpeed));
+	}
+
+	if (!bAttacked)
+	{
+		AddMovementInput(DirectionToPlayer, 1.0f);
+	}
+	else
+	{
+		AddMovementInput(-DirectionToPlayer, 1.0f);
+	}
+
+	if (FVector::Dist(PlayerCharacter->GetActorLocation(), GetActorLocation()) <= HitDistance)
+	{
+		HitPlayer();
+	}
+
 }
 
 void AZigZagEnemy::MoveZigZag(float DeltaTime)
@@ -93,4 +132,18 @@ void AZigZagEnemy::MyTakeDamage(float Damage)
 	{
 		Destroy();
 	}
+}
+
+void AZigZagEnemy::HitPlayer()
+{
+	if (!bAttacked)
+	{
+		// Player takes damage
+		AFPSCharacter* Player = Cast<AFPSCharacter>(PlayerCharacter);
+		if (Player)
+		{
+			Player->MyTakeDamage(1.0f);
+		}
+	}
+	bAttacked = true;
 }

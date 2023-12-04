@@ -103,36 +103,41 @@ void AShootingEnemy::StartShooting()
         FRotator DeltaRotation = NewRotation - CurrentRotation;
         DeltaRotation.Normalize();
         SetActorRotation(CurrentRotation + DeltaRotation * RotationInterpSpeed * GetWorld()->GetDeltaSeconds());
-    }
 
-    if (!GetWorldTimerManager().IsTimerActive(ShootTimerHandle))
-    {
-        // Spawn the projectile
-        if (ProjectileClass)
+        // Check if the enemy is aligned with the player
+        if (FMath::Abs(FVector::DotProduct(GetActorForwardVector(), Direction)) > 0.995f)
         {
-            UWorld* World = GetWorld();
-            if (World)
+            // Only shoot when aligned with the player
+            if (!GetWorldTimerManager().IsTimerActive(ShootTimerHandle))
             {
-                FActorSpawnParameters SpawnParams;
-                SpawnParams.Owner = this;
-                SpawnParams.Instigator = GetInstigator();
-
-                // Spawn the projectile at the muzzle.
-                FVector MuzzleOffset = FVector(100.0f, 0.0f, 0.0f); // Adjust the offset values accordingly
-                MuzzleOffset = DesiredRotation.RotateVector(MuzzleOffset);
-                MuzzleOffset = GetActorLocation() + MuzzleOffset;
-                AFPSProjectile* Projectile = World->SpawnActor<AFPSProjectile>(ProjectileClass, MuzzleOffset, DesiredRotation , SpawnParams);
-                if (Projectile)
+                // Spawn the projectile
+                if (ProjectileClass)
                 {
-                    // Set the projectile's initial trajectory.
-                    FVector LaunchDirection = this->GetActorRotation().Vector();
-                    Projectile->FireInDirection(LaunchDirection);
+                    UWorld* World = GetWorld();
+                    if (World)
+                    {
+                        FActorSpawnParameters SpawnParams;
+                        SpawnParams.Owner = this;
+                        SpawnParams.Instigator = GetInstigator();
+
+                        // Spawn the projectile at the muzzle.
+                        FVector MuzzleOffset = FVector(100.0f, 0.0f, 0.0f); // Adjust the offset values accordingly
+                        MuzzleOffset = DesiredRotation.RotateVector(MuzzleOffset);
+                        MuzzleOffset = GetActorLocation() + MuzzleOffset;
+                        AFPSProjectile* Projectile = World->SpawnActor<AFPSProjectile>(ProjectileClass, MuzzleOffset, DesiredRotation, SpawnParams);
+                        if (Projectile)
+                        {
+                            // Set the projectile's initial trajectory.
+                            FVector LaunchDirection = this->GetActorRotation().Vector();
+                            Projectile->FireInDirection(LaunchDirection);
+                        }
+                    }
                 }
+
+                // Set the cooldown timer
+                GetWorldTimerManager().SetTimer(ShootTimerHandle, this, &AShootingEnemy::ResetShootCooldown, ShootCooldownTime, false);
             }
         }
-
-        // Set the cooldown timer
-        GetWorldTimerManager().SetTimer(ShootTimerHandle, this, &AShootingEnemy::ResetShootCooldown, ShootCooldownTime, false);
     }
 }
 
