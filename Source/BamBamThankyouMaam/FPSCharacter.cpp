@@ -2,6 +2,7 @@
 
 
 #include "FPSCharacter.h"
+#include "GravityGun.h"
 
 // Sets default values
 AFPSCharacter::AFPSCharacter()
@@ -38,6 +39,10 @@ AFPSCharacter::AFPSCharacter()
 
 	// The owning player doesn't see the regular (third-person) body mesh.
 	GetMesh()->SetOwnerNoSee(true);
+
+	ReachDistance = 500.0f;
+	CurrentlyGrabbedComponent = nullptr;
+	PhysicsHandle = PhysicsHandle = CreateDefaultSubobject<UPhysicsHandleComponent>(TEXT("PhysicsHandle"));
 }
 
 // Called when the game starts or when spawned
@@ -51,12 +56,43 @@ void AFPSCharacter::BeginPlay()
 	// The -1 "Key" value argument prevents the message from being updated or refreshed.
 	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("We are using FPSCharacter."));
 	UpdateHealthDebugDisplay();
+
 }
 
 // Called every frame
 void AFPSCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+
+	if (PhysicsHandle && PhysicsHandle->GrabbedComponent)
+	{
+		FVector CameraForwardVector = FPSCameraComponent->GetForwardVector();
+
+		// Specify the distance you want to move the object
+		float DistanceToMove = 500.0f;
+
+		// Calculate the new location by adding the forward vector multiplied by the distance
+		FVector NewLocation = GetActorLocation() + CameraForwardVector * DistanceToMove;
+
+		// Perform a downward trace to find the ground 
+		FVector DownwardTraceStart = NewLocation;
+		FVector DownwardTraceEnd = DownwardTraceStart - FVector::UpVector * 200.0f; // Adjust the trace distance as needed
+
+		FHitResult FloorHitResult;
+		FCollisionQueryParams FloorCollisionParams;
+		FloorCollisionParams.AddIgnoredActor(this);
+
+		if (GetWorld()->LineTraceSingleByChannel(FloorHitResult, DownwardTraceStart, DownwardTraceEnd, ECC_Visibility, FloorCollisionParams))
+		{
+			// Adjust the new location to stay above the ground
+			NewLocation.Z = FloorHitResult.Location.Z + 10.0f; // Adjust the offset as needed
+		}
+
+		PhysicsHandle->SetTargetRotation(this->GetActorRotation());
+
+		// Set the target location for smooth interpolation
+		PhysicsHandle->SetTargetLocation(NewLocation);
+	}
 }
 
 // Called to bind functionality to input
@@ -75,6 +111,12 @@ void AFPSCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompon
 	PlayerInputComponent->BindAction("Jump", IE_Released, this, &AFPSCharacter::StopJump);
 	// Set up "fire" bindings.
 	PlayerInputComponent->BindAction("Fire", IE_Pressed, this, &AFPSCharacter::Fire);
+	// Set up "release" bindings
+	PlayerInputComponent->BindAction("Release", IE_Pressed, this, &AFPSCharacter::Release);
+	// Bind the "Interact" function to a custom input
+	PlayerInputComponent->BindAction("Interact", IE_Pressed, this, &AFPSCharacter::Interact);
+	// Set up the "switchweapon" bindings
+	PlayerInputComponent->BindAction("SwitchWeapon", IE_Pressed, this, &AFPSCharacter::SwitchWeapon);
 }
 
 void AFPSCharacter::MoveForward(float Value)
@@ -103,39 +145,92 @@ void AFPSCharacter::StopJump()
 
 void AFPSCharacter::Fire()
 {
-	// Attempt to fire a projectile.
-	if (ProjectileClass)
+	if (bGravityGun)
 	{
-		// Get the camera transform.
-		FVector CameraLocation;
-		FRotator CameraRotation;
-		GetActorEyesViewPoint(CameraLocation, CameraRotation);
-
-		// Set MuzzleOffset to spawn projectiles slightly in front of the camera.
-		MuzzleOffset.Set(132.0f, 35.0f, -10.0f);
-
-		// Transform MuzzleOffset from camera space to world space.
-		FVector MuzzleLocation = CameraLocation + FTransform(CameraRotation).TransformVector(MuzzleOffset);
-
-		// Skew the aim to be slightly upwards.
-		FRotator MuzzleRotation = CameraRotation;
-		MuzzleRotation.Pitch += 0.7f;
-		MuzzleRotation.Yaw += -1.0f;
-
-		UWorld* World = GetWorld();
-		if (World)
+		if (CurrentlyGrabbedComponent == nullptr)
 		{
-			FActorSpawnParameters SpawnParams;
-			SpawnParams.Owner = this;
-			SpawnParams.Instigator = GetInstigator();
+			FVector LineTraceStart = GetActorLocation();
+			FVector LineTraceEnd = LineTraceStart + GetActorForwardVector() * ReachDistance;
 
-			// Spawn the projectile at the muzzle.
-			AFPSProjectile* Projectile = World->SpawnActor<AFPSProjectile>(ProjectileClass, MuzzleLocation, MuzzleRotation, SpawnParams);
-			if (Projectile)
+			FHitResult HitResult;
+			FCollisionQueryParams CollisionParams;
+			CollisionParams.AddIgnoredActor(this);
+
+			// Perform a line trace to find a grabbable object
+			if (GetWorld()->LineTraceSingleByObjectType(HitResult, LineTraceStart, LineTraceEnd, FCollisionObjectQueryParams::AllObjects, CollisionParams))
 			{
-				// Set the projectile's initial trajectory.
-				FVector LaunchDirection = MuzzleRotation.Vector();
-				Projectile->FireInDirection(LaunchDirection);
+				UPrimitiveComponent* HitComponent = HitResult.GetComponent();
+
+				// If the actor has physics, grab it
+				if (HitComponent && HitComponent->IsSimulatingPhysics())
+				{
+					// Get the player's camera location and forward vector
+					FVector CameraLocation;
+					FRotator CameraRotation;
+					GetActorEyesViewPoint(CameraLocation, CameraRotation);
+
+					// Calculate the target location in front of the player
+					float DesiredDistance = 500.0f; // Adjust this value as needed
+					FVector TargetLocation = CameraLocation + CameraRotation.Vector() * DesiredDistance;
+
+					FHitResult FloorHitResult;
+					FVector DownwardTraceStart = HitResult.ImpactPoint;
+					FVector DownwardTraceEnd = DownwardTraceStart - FVector(0.0f, 0.0f, 100.0f); // Adjust the trace length as needed
+
+					if (GetWorld()->LineTraceSingleByChannel(FloorHitResult, DownwardTraceStart, DownwardTraceEnd, ECC_Visibility, CollisionParams))
+					{
+						// Adjust the target location to prevent clipping through the floor during grabbing
+						TargetLocation = FloorHitResult.ImpactPoint + FVector(0.0f, 0.0f, 10.0f); // Adjust the height as needed
+					}
+
+					// Grab the component at the modified target location
+					PhysicsHandle->GrabComponentAtLocation(HitComponent, NAME_None, HitComponent->GetCenterOfMass());
+					CurrentlyGrabbedComponent = HitComponent;
+				}
+			}
+		}
+		else
+		{
+			float Force = 3000.0f;
+			Release(Force);
+		}
+	}
+	else
+	{
+		// Attempt to fire a projectile.
+		if (ProjectileClass)
+		{
+			// Get the camera transform.
+			FVector CameraLocation;
+			FRotator CameraRotation;
+			GetActorEyesViewPoint(CameraLocation, CameraRotation);
+
+			// Set MuzzleOffset to spawn projectiles slightly in front of the camera.
+			MuzzleOffset.Set(132.0f, 35.0f, -10.0f);
+
+			// Transform MuzzleOffset from camera space to world space.
+			FVector MuzzleLocation = CameraLocation + FTransform(CameraRotation).TransformVector(MuzzleOffset);
+
+			// Skew the aim to be slightly upwards.
+			FRotator MuzzleRotation = CameraRotation;
+			MuzzleRotation.Pitch += 0.7f;
+			MuzzleRotation.Yaw += -1.0f;
+
+			UWorld* World = GetWorld();
+			if (World)
+			{
+				FActorSpawnParameters SpawnParams;
+				SpawnParams.Owner = this;
+				SpawnParams.Instigator = GetInstigator();
+
+				// Spawn the projectile at the muzzle.
+				AFPSProjectile* Projectile = World->SpawnActor<AFPSProjectile>(ProjectileClass, MuzzleLocation, MuzzleRotation, SpawnParams);
+				if (Projectile)
+				{
+					// Set the projectile's initial trajectory.
+					FVector LaunchDirection = MuzzleRotation.Vector();
+					Projectile->FireInDirection(LaunchDirection);
+				}
 			}
 		}
 	}
@@ -161,4 +256,79 @@ void AFPSCharacter::UpdateHealthDebugDisplay()
 	{
 		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, FString::Printf(TEXT("Health: %.2f"), health));
 	}
+}
+
+void AFPSCharacter::Interact()
+{
+	// Check for nearby Gravity Guns to collect
+	FHitResult HitResult;
+	FVector Start = FPSCameraComponent->GetComponentLocation();
+	FVector ForwardVector = FPSCameraComponent->GetForwardVector();
+	FVector End = Start + ForwardVector * 200.0f; 
+
+	FCollisionQueryParams CollisionParams;
+	CollisionParams.AddIgnoredActor(this);
+
+	DrawDebugLine(GetWorld(), Start, End, FColor::Red, false, 0.1f, 0, 1.0f);
+
+	if (GetWorld()->LineTraceSingleByChannel(HitResult, Start, End, ECC_Visibility, CollisionParams))
+	{
+		AGravityGun* HitGravityGun = Cast<AGravityGun>(HitResult.GetActor());
+
+		if (HitGravityGun)
+		{
+			// Change the bGravityGun boolean to true
+			bGravityGun = true;
+			bHasAttachment = true;
+			// Destroy the Gravity Gun
+			HitGravityGun->Destroy();
+		}
+	}
+}
+
+void AFPSCharacter::Release()
+{
+	if (PhysicsHandle && PhysicsHandle->GrabbedComponent)
+	{
+		PhysicsHandle->ReleaseComponent();
+		CurrentlyGrabbedComponent->SetAllPhysicsLinearVelocity(FVector());
+		CurrentlyGrabbedComponent = nullptr;
+	}
+}
+void AFPSCharacter::Release(float Force)
+{
+	if (PhysicsHandle && PhysicsHandle->GrabbedComponent)
+	{
+		// Release the physics handle
+		PhysicsHandle->ReleaseComponent();
+
+		if (bGravityGun)
+		{
+			// Set a constant velocity to the released object
+			FVector CameraForwardVector = FPSCameraComponent->GetForwardVector();
+			CurrentlyGrabbedComponent->SetAllPhysicsLinearVelocity(CameraForwardVector * Force);
+		}
+
+		// Reset the grabbed component
+		CurrentlyGrabbedComponent = nullptr;
+	}
+}
+
+void AFPSCharacter::SwitchWeapon()
+{
+	if (bHasAttachment)
+	{
+		if (!bGravityGun)
+		{
+			bGravityGun = true;
+		}
+		else
+		{
+			bGravityGun = false;
+		}
+	}
+}
+void AFPSCharacter::HideGravityGun(USceneComponent* SceneComponent)
+{
+
 }

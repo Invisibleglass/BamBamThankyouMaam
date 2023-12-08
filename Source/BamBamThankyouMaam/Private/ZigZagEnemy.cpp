@@ -118,7 +118,7 @@ bool AZigZagEnemy::CheckForObstacle()
 	bool bHit = GetWorld()->LineTraceSingleByChannel(HitResult, StartLocation, EndLocation, ECC_Visibility, CollisionParams);
 
 	// Debug: Draw the raycast line
-	DrawDebugLine(GetWorld(), StartLocation, EndLocation, FColor::Red, false, 0.1f, 0, 1.0f);
+	//DrawDebugLine(GetWorld(), StartLocation, EndLocation, FColor::Red, false, 0.1f, 0, 1.0f);
 
 	return bHit && HitResult.GetActor() != PlayerCharacter;
 }

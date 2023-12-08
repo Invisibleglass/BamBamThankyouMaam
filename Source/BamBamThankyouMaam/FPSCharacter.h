@@ -7,6 +7,7 @@
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/Character.h"
+#include <PhysicsEngine/PhysicsHandleComponent.h>
 #include "FPSCharacter.generated.h"
 
 UCLASS()
@@ -55,6 +56,24 @@ public:
 	UFUNCTION()
 	void StopJump();
 
+	// Allows Player to interact with objects (gravity gun)
+	UFUNCTION()
+	void Interact();
+
+	// Function that handles firing projectiles.
+	UFUNCTION()
+	void Fire();
+
+	UFUNCTION()
+	void HideGravityGun(USceneComponent* SceneComponent);
+
+	UFUNCTION()
+	void Release();
+	void Release(float Force);
+
+	UFUNCTION()
+	void SwitchWeapon();
+
 	// FPS camera.
 	UPROPERTY(VisibleAnywhere)
 	UCameraComponent* FPSCameraComponent;
@@ -62,10 +81,6 @@ public:
 	// First-person mesh (arms), visible only to the owning player.
 	UPROPERTY(VisibleDefaultsOnly, Category = Mesh)
 	USkeletalMeshComponent* FPSMesh;
-
-	// Function that handles firing projectiles.
-	UFUNCTION()
-	void Fire();
 
 	// Gun muzzle offset from the camera location.
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Gameplay)
@@ -75,6 +90,18 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = Projectile)
 	TSubclassOf<class AFPSProjectile> ProjectileClass;
 
+	bool bGravityGun = false;
+	bool bHasAttachment = false;
+
 private:
 	// Other functions and properties as needed
+
+	UPROPERTY(EditAnywhere)
+	float ReachDistance;
+
+	UPROPERTY()
+	UPrimitiveComponent* CurrentlyGrabbedComponent;
+
+	UPROPERTY()
+	UPhysicsHandleComponent* PhysicsHandle;
 };
