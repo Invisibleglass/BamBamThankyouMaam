@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "FPSProjectile.h"
+#include "HUDWidget.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/Character.h"
@@ -19,9 +20,10 @@ public:
 	// Sets default values for this character's properties
 	AFPSCharacter();
 
+	UPROPERTY(EditAnywhere)
+	float Health;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player")
-	float health;
-
+	float MaxHealth;
 	// Function to apply damage to the character
 	UFUNCTION(BlueprintCallable, Category = "Player")
 	void MyTakeDamage(float DamageAmount);
@@ -90,8 +92,17 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = Projectile)
 	TSubclassOf<class AFPSProjectile> ProjectileClass;
 
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<class UHUDWidget> HealthHUDClass;
+
+	UPROPERTY()
+	class UHUDWidget* PlayerHUD;
+
 	bool bGravityGun = false;
 	bool bHasAttachment = false;
+	int EnemysInWave;
+	int EnemysKilled;
+	int CurrentWave;
 
 private:
 	// Other functions and properties as needed

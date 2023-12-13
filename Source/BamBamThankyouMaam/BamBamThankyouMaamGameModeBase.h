@@ -16,4 +16,20 @@ class BAMBAMTHANKYOUMAAM_API ABamBamThankyouMaamGameModeBase : public AGameModeB
 	
 	virtual void StartPlay();
 
+public:
+	UFUNCTION()
+	void CreateActor();
+
+	UFUNCTION()
+	void SpawnWave();
+
+	UFUNCTION()
+	void SpawnEnemyWithDelay();
+
+	int EnemysInWave;
+	int EnemysKilled;
+	int CurrentWave;
+
+private:
+	FTimerHandle TimerHandle;
 };

@@ -27,6 +27,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Enemy")
 	float health;
 
+	UPROPERTY(EditDefaultsOnly)
+	TSubclassOf<AZigZagEnemy>ActorToSpawn;
+
 private:
 	AActor* PlayerCharacter;
 	float ZigZagSpeed;

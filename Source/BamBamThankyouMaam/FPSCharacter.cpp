@@ -3,6 +3,9 @@
 
 #include "FPSCharacter.h"
 #include "GravityGun.h"
+#include "Kismet/GameplayStatics.h"
+#include "HUDWidget.h"
+#include "Blueprint/UserWidget.h"
 
 // Sets default values
 AFPSCharacter::AFPSCharacter()
@@ -43,6 +46,12 @@ AFPSCharacter::AFPSCharacter()
 	ReachDistance = 500.0f;
 	CurrentlyGrabbedComponent = nullptr;
 	PhysicsHandle = PhysicsHandle = CreateDefaultSubobject<UPhysicsHandleComponent>(TEXT("PhysicsHandle"));
+
+	MaxHealth = 3;
+	Health = MaxHealth;
+
+	HealthHUDClass = nullptr;
+	PlayerHUD = nullptr;
 }
 
 // Called when the game starts or when spawned
@@ -50,13 +59,22 @@ void AFPSCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
-	check(GEngine != nullptr);
+	if (HealthHUDClass)
+	{
+		APlayerController* PlayerController = GetController<APlayerController>();
+		PlayerHUD = CreateWidget<UHUDWidget>(PlayerController, HealthHUDClass);
+		PlayerHUD->AddToViewport();
+		PlayerHUD->SetHealth(Health, MaxHealth);
+	}
 
+	check(GEngine != nullptr);
 	// Display a debug message for five seconds. 
 	// The -1 "Key" value argument prevents the message from being updated or refreshed.
 	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("We are using FPSCharacter."));
 	UpdateHealthDebugDisplay();
 
+	EnemysKilled = 0;
+	EnemysInWave = 12;
 }
 
 // Called every frame
@@ -92,6 +110,10 @@ void AFPSCharacter::Tick(float DeltaTime)
 
 		// Set the target location for smooth interpolation
 		PhysicsHandle->SetTargetLocation(NewLocation);
+	}
+	if (EnemysKilled >= EnemysInWave)
+	{
+		UGameplayStatics::OpenLevel(GetWorld(), TEXT("MainMenuMap"), true);
 	}
 }
 
@@ -238,10 +260,10 @@ void AFPSCharacter::Fire()
 
 void AFPSCharacter::MyTakeDamage(float DamageAmount)
 {
-	health -= DamageAmount;
-
+	Health -= DamageAmount;
+	
 	// Check if the health goes below zero and handle death or other logic if needed
-	if (health <= 0.0f)
+	if (Health <= 0.0f)
 	{
 		// Handle death or other logic here
 	}
@@ -252,9 +274,10 @@ void AFPSCharacter::MyTakeDamage(float DamageAmount)
 
 void AFPSCharacter::UpdateHealthDebugDisplay()
 {
+	PlayerHUD->SetHealth(Health, MaxHealth);
 	if (GEngine)
 	{
-		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, FString::Printf(TEXT("Health: %.2f"), health));
+		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, FString::Printf(TEXT("Health: %.2f"), Health));
 	}
 }
 

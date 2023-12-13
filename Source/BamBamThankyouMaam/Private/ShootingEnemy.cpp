@@ -154,6 +154,11 @@ void AShootingEnemy::MyTakeDamage(float Damage)
     // Check if the health goes below zero and handle death or other logic if needed
     if (health <= 0.0f)
     {
-       Destroy();
+        AFPSCharacter* Player = Cast<AFPSCharacter>(PlayerCharacter);
+        if (Player)
+        {
+            Player->EnemysKilled++;
+        }
+        Destroy();
     }
 }

@@ -2,7 +2,7 @@
 #include "ZigZagEnemy.h"
 #include "GameFramework/PlayerController.h"
 #include "Kismet/GameplayStatics.h"
-#include "BamBamThankyouMaam/FPSCharacter.h"
+#include "BamBamThankyouMaam\FPSCharacter.h"
 
 AZigZagEnemy::AZigZagEnemy()
 {
@@ -20,6 +20,7 @@ AZigZagEnemy::AZigZagEnemy()
 void AZigZagEnemy::BeginPlay()
 {
 	Super::BeginPlay();
+
 	PlayerCharacter = UGameplayStatics::GetPlayerCharacter(this, 0);
 }
 
@@ -130,6 +131,11 @@ void AZigZagEnemy::MyTakeDamage(float Damage)
 	// Check if the health goes below zero and handle death or other logic if needed
 	if (health <= 0.0f)
 	{
+		AFPSCharacter* Player = Cast<AFPSCharacter>(PlayerCharacter);
+		if (Player)
+		{
+			Player->EnemysKilled++;
+		}
 		Destroy();
 	}
 }

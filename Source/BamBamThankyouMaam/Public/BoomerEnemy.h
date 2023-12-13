@@ -50,6 +50,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Enemy")
 	float PatrolRadius;
 
+	UPROPERTY(EditDefaultsOnly)
+	TSubclassOf<ABoomerEnemy>ActorToSpawn;
+
 
 private:
 	AActor* PlayerCharacter;

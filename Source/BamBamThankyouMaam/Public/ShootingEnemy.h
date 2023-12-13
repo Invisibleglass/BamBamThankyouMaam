@@ -33,6 +33,9 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Enemy")
     float health;
 
+    UPROPERTY(EditDefaultsOnly)
+    TSubclassOf<AShootingEnemy>ActorToSpawn;
+
 private:
     // Projectile class to spawn.
     UPROPERTY(EditDefaultsOnly, Category = Projectile)

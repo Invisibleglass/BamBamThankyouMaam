@@ -68,6 +68,11 @@ void ABoomerEnemy::Explode()
 		}
 	}
 
+	AFPSCharacter* Player = Cast<AFPSCharacter>(PlayerCharacter);
+	if (Player)
+	{
+		Player->EnemysKilled++;
+	}
 	// Destroy the BoomerEnemy
 	Destroy();
 }
