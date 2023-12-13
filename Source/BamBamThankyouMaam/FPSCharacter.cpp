@@ -113,7 +113,7 @@ void AFPSCharacter::Tick(float DeltaTime)
 	}
 	if (EnemysKilled >= EnemysInWave)
 	{
-		UGameplayStatics::OpenLevel(GetWorld(), TEXT("MainMenuMap"), true);
+		UGameplayStatics::OpenLevel(GetWorld(), TEXT("YouWon"), true);
 	}
 }
 
@@ -266,6 +266,7 @@ void AFPSCharacter::MyTakeDamage(float DamageAmount)
 	if (Health <= 0.0f)
 	{
 		// Handle death or other logic here
+		UGameplayStatics::OpenLevel(GetWorld(), TEXT("YouLost"), true);
 	}
 
 	// Update health debug display
@@ -275,10 +276,6 @@ void AFPSCharacter::MyTakeDamage(float DamageAmount)
 void AFPSCharacter::UpdateHealthDebugDisplay()
 {
 	PlayerHUD->SetHealth(Health, MaxHealth);
-	if (GEngine)
-	{
-		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, FString::Printf(TEXT("Health: %.2f"), Health));
-	}
 }
 
 void AFPSCharacter::Interact()
